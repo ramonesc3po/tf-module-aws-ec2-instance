@@ -1,3 +1,7 @@
+provider "aws" {
+  region = "us-east-1"
+}
+
 data "aws_ami" "bastion" {
   most_recent = "true"
 
@@ -13,19 +17,15 @@ data "aws_ami" "bastion" {
 }
 
 data "aws_vpc" "default" {
-  filter {
-    name   = "Tenancy"
-    values = ["default"]
-  }
-
-  filter {
-    name   = "Default VPC"
-    values = ["Yes"]
-  }
+  default = true
 }
 
 data "aws_subnet_ids" "default" {
   vpc_id = "${data.aws_vpc.default.id}"
+}
+
+output "debug" {
+  value = "${data.aws_subnet_ids.default.ids}"
 }
 
 resource "aws_security_group" "bastion" {
@@ -56,19 +56,20 @@ resource "aws_security_group" "bastion" {
 
 resource "aws_key_pair" "bastion" {
   key_name   = "bastion"
-  public_key = "${file("keys/bastion.pub")}"
+  public_key = "${file("key/bastion.pub")}"
 }
 
 module "bastion" {
   source = "../"
 
-  ec2_instance_name     = "bastion"
-  ec2_instance_ami      = "${data.aws_ami.bastion.id}"
-  ec2_instance_type     = "t2.micro"
-  instance_tier         = "production"
-  instance_organization = "zigzaga"
-  instance_key_name     = "${aws_key_pair.bastion.key_name}"
-  subnet                = "${element(data.aws_subnet_ids, 0)}"
+  ec2_instance_name           = "bastion"
+  ec2_instance_ami            = "${data.aws_ami.bastion.id}"
+  ec2_instance_type           = "t2.micro"
+  instance_tier               = "production"
+  instance_organization       = "zigzaga"
+  instance_key_name           = "${aws_key_pair.bastion.key_name}"
+  subnet                      = "${element(data.aws_subnet_ids.default.ids, 0)}"
+  associate_public_ip_address = "true"
 
-  security_groups_ids = "${aws_security_group.bastion.id}"
+  security_groups_ids = ["${aws_security_group.bastion.id}"]
 }

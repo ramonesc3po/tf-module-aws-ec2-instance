@@ -36,7 +36,7 @@ variable "disable_api_termination" {
 
 variable "instance_initiated_shutdown_behavior" {
   description = "(Optional) Shutdown behavior for the instance. Amazon defaults this to stop for EBS-backed instances and terminate for instance-store instances. Cannot be set on instance-store instances. See Shutdown Behavior for more information."
-  default     = false
+  default     = "stop"
 }
 
 variable "monitoring_enabled" {
